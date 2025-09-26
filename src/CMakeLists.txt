@@ -1,9 +1,11 @@
 add_executable(${PROJECT_NAME}
         main.cpp
         Game.cpp
+        Map.cpp
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE
         SDL3::SDL3
+        SDL3_image::SDL3_image
         tl::expected
         tinytmx::tinytmx
 )
