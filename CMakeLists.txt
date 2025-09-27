@@ -11,3 +11,5 @@ set(CMAKE_CXX_STANDARD 26)
 include(CheckModules)
 
 add_subdirectory(src)
+
+include(CheckAssets)

@@ -1,6 +1,8 @@
 #include "Game.hpp"
 #include <iostream>
 
+static std::string ASSETS_PATH(TEH_ASSETS_PATH);
+
 Game::Game() : isRunning(false), window(nullptr), renderer(nullptr), map(nullptr) {}
 
 Game::~Game() {
@@ -8,10 +10,7 @@ Game::~Game() {
 }
 
 bool Game::init() {
-    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        std::cerr << "SDL_Init Error: " << SDL_GetError() << std::endl;
-        return false;
-    }
+    SDL_Init(SDL_INIT_VIDEO);
 
     window = SDL_CreateWindow("TEH", 640, 480, 0);
     if (!window) {
@@ -29,7 +28,7 @@ bool Game::init() {
     }
 
     map = new Map(renderer);
-    if (!map->load("assets/maps/tests/dungeon.tmx")) {
+    if (!map->load(ASSETS_PATH + "maps/tests/dungeon.tmx")) {
         std::cerr << "Failed to load map." << std::endl;
         return false;
     }

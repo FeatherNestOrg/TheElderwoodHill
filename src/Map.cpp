@@ -2,6 +2,7 @@
 #include <SDL3_image/SDL_image.h>
 #include <iostream>
 #include <filesystem>
+#include "tinytmx.hpp"
 
 namespace fs = std::filesystem;
 
@@ -22,12 +23,17 @@ bool Map::load(const std::string& filePath) {
         return false;
     }
 
+    if (!tileset->GetImage()) {
+        std::cerr << "Tileset image not found." << std::endl;
+        return false;
+    }
+
     fs::path mapPath(filePath);
     fs::path tilesetImagePath = mapPath.parent_path() / tileset->GetImage()->GetSource();
 
     tilesetTexture = IMG_LoadTexture(renderer, tilesetImagePath.string().c_str());
     if (!tilesetTexture) {
-        std::cerr << "Failed to load tileset texture: " << tilesetImagePath << " | " << IMG_GetError() << std::endl;
+        std::cerr << "Failed to load tileset texture: " << tilesetImagePath << " | " << SDL_GetError() << std::endl;
         return false;
     }
 
@@ -40,30 +46,31 @@ void Map::render() {
     }
 
     auto tileset = tmxMap.GetTileset(0);
-    int tileWidth = tileset->GetTileWidth();
-    int tileHeight = tileset->GetTileHeight();
-    int columns = tileset->GetColumns();
+    if (!tileset) return;
+    auto tileWidth = tileset->GetTileWidth();
+    auto tileHeight = tileset->GetTileHeight();
+    auto columns = tileset->GetColumns();
 
-    for (const auto& layer : tmxMap.GetLayers()) {
-        if (layer->IsTileLayer()) {
-            const tinytmx::TileLayer* tileLayer = layer->GetTileLayer();
-            for (int y = 0; y < tmxMap.GetHeight(); ++y) {
-                for (int x = 0; x < tmxMap.GetWidth(); ++x) {
-                    const tinytmx::MapTile& mapTile = tileLayer->GetTile(x, y);
-                    if (mapTile.gid == 0) {
-                        continue;
-                    }
-
-                    int tilesetX = (mapTile.gid - 1) % columns;
-                    int tilesetY = (mapTile.gid - 1) / columns;
-
-                    SDL_Rect srcRect = { tilesetX * tileWidth, tilesetY * tileHeight, tileWidth, tileHeight };
-                    SDL_Rect destRect = { x * tileWidth, y * tileHeight, tileWidth, tileHeight };
-
-                    SDL_RenderCopy(renderer, tilesetTexture, &srcRect, &destRect);
+    for (const auto& layer : tmxMap.GetTileLayers()) {
+        const auto* dataChunk = layer->GetDataTileFiniteMap();
+        if (!dataChunk) {
+            continue;
+        }
+        for (int y = 0; y < dataChunk->GetHeight(); ++y) {
+            for (int x = 0; x < dataChunk->GetWidth(); ++x) {
+                const tinytmx::MapTile& mapTile = dataChunk->GetTile(x, y);
+                if (mapTile.gid == 0) {
+                    continue;
                 }
+
+                int tilesetX = (static_cast<int>(mapTile.gid) - 1) % static_cast<int>(columns);
+                int tilesetY = (static_cast<int>(mapTile.gid) - 1) / static_cast<int>(columns);
+
+                SDL_FRect srcRect = { static_cast<float>(tilesetX * tileWidth), static_cast<float>(tilesetY * tileHeight), static_cast<float>(tileWidth), static_cast<float>(tileHeight) };
+                SDL_FRect destRect = { static_cast<float>(x * tileWidth), static_cast<float>(y * tileHeight), static_cast<float>(tileWidth), static_cast<float>(tileHeight) };
+
+                SDL_RenderTexture(renderer, tilesetTexture, &srcRect, &destRect);
             }
         }
     }
 }
-
