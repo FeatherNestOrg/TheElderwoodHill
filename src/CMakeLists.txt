@@ -14,6 +14,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         tl::expected
         tmxparser::tmxparser
         unordered_dense::unordered_dense
+        spdlog
 )
 
 if (WIN32)

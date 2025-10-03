@@ -16,7 +16,7 @@ bool Game::init()
 {
     SDL_Init(SDL_INIT_VIDEO);
 
-    window = SDL_CreateWindow("TEH", 640, 480, 0);
+    window = SDL_CreateWindow("古树之丘", 640, 480, 0);
     if (!window)
     {
         std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
