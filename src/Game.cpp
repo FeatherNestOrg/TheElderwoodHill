@@ -1,4 +1,5 @@
 #include "Game.hpp"
+#include "Utils/Logger.hpp"
 #include <iostream>
 
 static std::string ASSETS_PATH(TEH_ASSETS_PATH);
@@ -14,12 +15,17 @@ Game::~Game()
 
 bool Game::init()
 {
+    // Initialize logger first
+    teh::utils::Logger::init();
+    
+    TEH_GAME_LOG(INFO, "Initializing game...");
+    
     SDL_Init(SDL_INIT_VIDEO);
 
     window = SDL_CreateWindow("古树之丘", 640, 480, 0);
     if (!window)
     {
-        std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
+        TEH_GRAPHICS_LOG(ERROR, "SDL_CreateWindow Error: {}", SDL_GetError());
         SDL_Quit();
         return false;
     }
@@ -27,7 +33,7 @@ bool Game::init()
     renderer = SDL_CreateRenderer(window, nullptr);
     if (!renderer)
     {
-        std::cerr << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
+        TEH_GRAPHICS_LOG(ERROR, "SDL_CreateRenderer Error: {}", SDL_GetError());
         SDL_DestroyWindow(window);
         SDL_Quit();
         return false;
@@ -36,12 +42,14 @@ bool Game::init()
     map = new teh::map::Map(renderer);
     if (!map->load(ASSETS_PATH + "maps/tests/dungeon/dungeon.tmx"))
     {
-        std::cerr << "Failed to load map." << std::endl;
+        TEH_GAME_LOG(ERROR, "Failed to load map");
         return false;
     }
 
     isRunning = true;
     lastTime = SDL_GetTicks();
+    
+    TEH_GAME_LOG(INFO, "Game initialized successfully");
     return true;
 }
 
@@ -65,6 +73,8 @@ void Game::run()
 
 void Game::cleanup()
 {
+    TEH_GAME_LOG(INFO, "Cleaning up game resources...");
+    
     delete map;
     map = nullptr;
 
@@ -79,6 +89,9 @@ void Game::cleanup()
         window = nullptr;
     }
     SDL_Quit();
+    
+    // Shutdown logger last
+    teh::utils::Logger::shutdown();
 }
 
 void Game::handleEvents()
@@ -94,6 +107,7 @@ void Game::handleEvents()
         {
             if (e.key.key == SDLK_ESCAPE)
             {
+                TEH_INPUT_LOG(INFO, "Escape key pressed, exiting game");
                 isRunning = false;
             }
         }

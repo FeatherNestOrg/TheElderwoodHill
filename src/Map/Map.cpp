@@ -1,4 +1,5 @@
 #include "Map.hpp"
+#include "../Utils/Logger.hpp"
 #include <SDL3_image/SDL_image.h>
 #include <iostream>
 #include <filesystem>
@@ -28,36 +29,34 @@ namespace teh::map
 
     bool Map::load(const std::string& filePath)
     {
-        std::cout << "Map::load - Starting to load: " << filePath << std::endl;
+        TEH_MAP_LOG(INFO, "Starting to load map: {}", filePath);
 
         // Parse the TMX file using tmxparser
         auto result = tmx::Parser::parseFromFile(filePath);
 
         if (!result)
         {
-            std::cerr << "Failed to parse TMX file: " << result.error() << std::endl;
+            TEH_MAP_LOG(ERROR, "Failed to parse TMX file: {}", result.error());
             return false;
         }
 
         const auto& map = *result;
 
-        std::cout << "Map::load - TMX file parsed successfully" << std::endl;
-        std::cout << "Map::load - Map size: " << map.width << "x" << map.height << std::endl;
-        std::cout << "Map::load - Tile size: " << map.tilewidth << "x" << map.tileheight << std::endl;
-        std::cout << "Map::load - Number of tilesets: " << map.tilesets.size() << std::endl;
-        std::cout << "Map::load - Number of layers: " << map.layers.size() << std::endl;
+        TEH_MAP_LOG(INFO, "TMX file parsed successfully");
+        TEH_MAP_LOG(DEBUG, "Map size: {}x{}", map.width, map.height);
+        TEH_MAP_LOG(DEBUG, "Tile size: {}x{}", map.tilewidth, map.tileheight);
+        TEH_MAP_LOG(DEBUG, "Number of tilesets: {}", map.tilesets.size());
+        TEH_MAP_LOG(DEBUG, "Number of layers: {}", map.layers.size());
 
         // Get the base path for resolving relative tileset paths
         fs::path mapPath(filePath);
         std::string basePath = mapPath.parent_path().string();
 
         // Create pre-calculated render data
-        std::cout << "Map::load - Creating render data..." << std::endl;
+        TEH_MAP_LOG(INFO, "Creating render data...");
         m_RenderData = tmx::render::createRenderData(map, basePath);
 
-        std::cout << "Map::load - Render data created:" << std::endl;
-        std::cout << "  - Tilesets: " << m_RenderData.tilesets.size() << std::endl;
-        std::cout << "  - Layers: " << m_RenderData.layers.size() << std::endl;
+        TEH_MAP_LOG(DEBUG, "Render data created - Tilesets: {}, Layers: {}", m_RenderData.tilesets.size(), m_RenderData.layers.size());
 
         // Count animations
         size_t totalAnimations = 0;
@@ -66,11 +65,10 @@ namespace teh::map
             totalAnimations += tileset.animations.size();
             if (!tileset.animations.empty())
             {
-                std::cout << "  - Tileset '" << tileset.name << "' has "
-                    << tileset.animations.size() << " animations" << std::endl;
+                TEH_MAP_LOG(DEBUG, "Tileset '{}' has {} animations", tileset.name, tileset.animations.size());
             }
         }
-        std::cout << "  - Total animations: " << totalAnimations << std::endl;
+        TEH_MAP_LOG(DEBUG, "Total animations: {}", totalAnimations);
 
         size_t totalTiles = 0;
         size_t animatedTiles = 0;
@@ -84,35 +82,32 @@ namespace teh::map
                     animatedTiles++;
                 }
             }
-            std::cout << "  - Layer '" << layer.name << "': " << layer.tiles.size() << " tiles" << std::endl;
+            TEH_MAP_LOG(DEBUG, "Layer '{}': {} tiles", layer.name, layer.tiles.size());
         }
-        std::cout << "  - Total renderable tiles: " << totalTiles
-            << " (" << animatedTiles << " animated)" << std::endl;
+        TEH_MAP_LOG(DEBUG, "Total renderable tiles: {} ({} animated)", totalTiles, animatedTiles);
 
         // Load all tileset textures
-        std::cout << "Map::load - Loading tileset textures..." << std::endl;
+        TEH_MAP_LOG(INFO, "Loading tileset textures...");
         m_TilesetTextures.clear();
 
         for (size_t i = 0; i < m_RenderData.tilesets.size(); ++i)
         {
             const auto& tileset = m_RenderData.tilesets[i];
 
-            std::cout << "Map::load - Loading tileset " << i << ": " << tileset.name << std::endl;
-            std::cout << "  Image path: " << tileset.imagePath << std::endl;
+            TEH_MAP_LOG(DEBUG, "Loading tileset {}: '{}' from {}", i, tileset.name, tileset.imagePath);
 
             SDL_Texture* texture = IMG_LoadTexture(m_Renderer, tileset.imagePath.c_str());
             if (!texture)
             {
-                std::cerr << "Failed to load tileset texture: " << tileset.imagePath
-                    << " | SDL Error: " << SDL_GetError() << std::endl;
+                TEH_RESOURCE_LOG(ERROR, "Failed to load tileset texture: {} | SDL Error: {}", tileset.imagePath, SDL_GetError());
                 return false;
             }
 
-            std::cout << "  Texture loaded successfully" << std::endl;
+            TEH_RESOURCE_LOG(DEBUG, "Texture loaded successfully: {}", tileset.imagePath);
             m_TilesetTextures.push_back(texture);
         }
 
-        std::cout << "Map loaded successfully!" << std::endl;
+        TEH_MAP_LOG(INFO, "Map loaded successfully!");
         m_Loaded = true;
         return true;
     }

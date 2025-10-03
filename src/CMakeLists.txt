@@ -4,9 +4,15 @@ add_executable(${PROJECT_NAME}
         Map/Map.cpp
         Map/Animation.cpp
         Map/Renderer.cpp
+        Utils/Logger.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE "${PROJECT_SOURCE_DIR}/src")
+
+# Configure logging
+if(ENABLE_CONSOLE_LOG)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE TEH_ENABLE_CONSOLE_LOG)
+endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         SDL3::SDL3
@@ -15,6 +21,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         tmxparser::tmxparser
         unordered_dense::unordered_dense
         spdlog
+        fmt
 )
 
 if (WIN32)
