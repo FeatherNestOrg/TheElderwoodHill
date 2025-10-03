@@ -2,9 +2,10 @@
 #define THEELDERWOODHILL_GAME_HPP
 
 #include <SDL3/SDL.h>
-#include "Map.hpp"
+#include "Map/Map.hpp"
 
-class Game {
+class Game
+{
 public:
     Game();
     ~Game();
@@ -15,13 +16,14 @@ public:
 
 private:
     void handleEvents();
-    void update();
-    void render();
+    void update(uint32_t deltaTime);
+    void render(uint32_t deltaTime);
 
     bool isRunning;
     SDL_Window* window;
     SDL_Renderer* renderer;
-    Map* map;
+    teh::map::Map* map;
+    uint32_t lastTime;
 };
 
 #endif //THEELDERWOODHILL_GAME_HPP
